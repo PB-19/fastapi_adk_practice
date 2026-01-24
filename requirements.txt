@@ -1,6 +1,8 @@
 fastapi
 pydantic
+pydantic[email]
 uvicorn
+cryptography
 sqlalchemy
 aiomysql
 python-dotenv

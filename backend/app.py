@@ -1,18 +1,18 @@
-import os
-from contextlib import asynccontextmanager
 from fastapi import FastAPI
-import uvicorn
-
+from contextlib import asynccontextmanager
+from backend.utils import create_tables, close_db, get_db
 from dotenv import load_dotenv
 load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # startup code
+    await create_tables()
 
     yield
 
     # shutdown code
+    await close_db()
 
 app = FastAPI(
     title="Inventory Management API",
@@ -24,6 +24,3 @@ app = FastAPI(
 @app.get("/")
 async def root():
     return {"status": "API is running"}
-
-if __name__=="__main__":
-    uvicorn.run(app, host=os.getenv("DEFAULT_HOST"), port=os.getenv("DEFAULT_PORT"))
