@@ -43,3 +43,8 @@ app.include_router(api_v1_router)
 @app.get("/")
 async def root():
     return {"status": "API is running"}
+
+@app.get("/health")
+async def health_check():
+    return {"status": "API is running"}
+
