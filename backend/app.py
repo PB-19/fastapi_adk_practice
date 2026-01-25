@@ -1,6 +1,6 @@
 from fastapi import FastAPI, APIRouter
 from contextlib import asynccontextmanager
-from backend.utils import create_tables, close_db, get_db
+from backend.utils import create_tables, close_db, seed_database, AsyncSessionLocal
 from backend.routes import (
     login_router,
     products_router,
@@ -16,6 +16,8 @@ load_dotenv()
 async def lifespan(app: FastAPI):
     # startup code
     await create_tables()
+    async with AsyncSessionLocal() as session:
+        await seed_database(session)
 
     yield
 
