@@ -7,4 +7,6 @@ sqlalchemy
 aiomysql
 python-dotenv
 pyjwt
-passlib[bcrypt]
+passlib[bcrypt]==1.7.4
+python-multipart
+bcrypt==4.0.1

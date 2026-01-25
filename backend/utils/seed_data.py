@@ -2,6 +2,7 @@ import os
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from backend.models import DBUser, DBSupplier, DBProduct, DBInventory
+from backend.utils.auth import hash_password
 from backend.utils.logger import AppLogger
 from backend.utils.constants import SEED_PRODUCTS_DATA, SEED_SUPPLIERS_DATA, SEED_INVENTORY_DATA
 from dotenv import load_dotenv
@@ -18,9 +19,13 @@ async def seed_database(db: AsyncSession):
     if existing_users:
         logger.info("USERS table already seeded. Skipping...")
     else:
+        raw = str(os.getenv("DEFAULT_PASSWORD")).strip()
+        print(f"Password length (chars): {len(raw)}, bytes: {len(raw.encode())}")
+        hashed = hash_password(raw)
+        print(f"=== HASHED PASSWORD: {hashed} ===")
         user = DBUser(
             username=os.getenv("DEFAULT_USERNAME"),
-            password=os.getenv("DEFAULT_PASSWORD")
+            password=hashed,
         )
         db.add(user)
         await db.commit()

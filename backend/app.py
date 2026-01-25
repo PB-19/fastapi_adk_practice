@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, APIRouter
 from contextlib import asynccontextmanager
 from backend.utils import create_tables, close_db, seed_database, AsyncSessionLocal
@@ -31,7 +32,7 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-api_v1_router = APIRouter(prefix="/api/v1")
+api_v1_router = APIRouter(prefix=os.getenv("API_BASE_PREFIX"))
 api_v1_router.include_router(login_router)
 api_v1_router.include_router(products_router)
 api_v1_router.include_router(suppliers_router)
