@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import List
+from typing import List, Dict
 from backend.models.data_models import Product, Supplier
 
 class GetProductsResponse(BaseModel):
@@ -41,3 +41,9 @@ class UpdateSupplierRequest(BaseModel):
     location: str
     contact_email: EmailStr
     reliability_score: float
+
+class CreateOrderRequest(BaseModel):
+    order_items: List[Dict]
+
+class CreateSaleRequest(BaseModel):
+    sale_items: List[Dict]
