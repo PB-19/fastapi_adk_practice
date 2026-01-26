@@ -16,6 +16,11 @@ from .database_models import (
     Sale as DBSale,
     Order as DBOrder,
 )
+from .api_models import (
+    GetProductsResponse,
+    CreateProductRequest,
+    UpdateProductRequest,
+)
 
 __all__ = [
     "User",
@@ -32,4 +37,7 @@ __all__ = [
     "DBInventory",
     "DBSale",
     "DBOrder",
+    "GetProductsResponse",
+    "CreateProductRequest",
+    "UpdateProductRequest",
 ]
