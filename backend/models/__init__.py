@@ -20,6 +20,9 @@ from .api_models import (
     GetProductsResponse,
     CreateProductRequest,
     UpdateProductRequest,
+    GetSuppliersResponse,
+    CreateSupplierRequest,
+    UpdateSupplierRequest,
 )
 
 __all__ = [
@@ -40,4 +43,7 @@ __all__ = [
     "GetProductsResponse",
     "CreateProductRequest",
     "UpdateProductRequest",
+    "GetSuppliersResponse",
+    "CreateSupplierRequest",
+    "UpdateSupplierRequest",
 ]

@@ -1,6 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import List
-from backend.models.data_models import Product
+from backend.models.data_models import Product, Supplier
 
 class GetProductsResponse(BaseModel):
     count: int
@@ -21,3 +21,23 @@ class UpdateProductRequest(BaseModel):
     category: str
     unit_price: float
     supplier_id: int
+
+class GetSuppliersResponse(BaseModel):
+    count: int
+    suppliers: List[Supplier]
+
+    class Config:
+        from_attributes = True
+
+class CreateSupplierRequest(BaseModel):
+    supplier_name: str
+    location: str
+    contact_email: EmailStr
+    reliability_score: float
+
+class UpdateSupplierRequest(BaseModel):
+    product_id: int
+    supplier_name: str
+    location: str
+    contact_email: EmailStr
+    reliability_score: float
