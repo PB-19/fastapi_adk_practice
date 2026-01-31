@@ -4,6 +4,7 @@ from sqlalchemy import select
 from typing import Optional
 
 from backend.utils import get_db
+from backend.utils.logger import AppLogger
 from backend.utils.auth import get_current_user
 from backend.models import Product, DBProduct, DBUser
 from backend.models.api_models import (
@@ -13,6 +14,7 @@ from backend.models.api_models import (
 )
 
 router = APIRouter(prefix="/products", tags=["Products"])
+logger = AppLogger.get_logger(__name__)
 
 @router.get("", response_model=GetProductsResponse)
 async def get_products(
@@ -20,6 +22,8 @@ async def get_products(
     db: AsyncSession = Depends(get_db),
     current_user: DBUser = Depends(get_current_user),
 ) -> GetProductsResponse:
+    
+    logger.info("Retrieving products list...")
         
     sql_query = select(DBProduct)
     if supplier_id is not None:
@@ -32,6 +36,7 @@ async def get_products(
         count=len(products),
         products=products
     )
+    logger.info(f"Retrieved {len(products)} products.")
     return response
 
 @router.get("/{product_id}")
@@ -41,10 +46,13 @@ async def get_product_by_id(
     current_user: DBUser = Depends(get_current_user),
 ) -> Product:
     
+    logger.info(f"Retrieving product with ID {product_id}...")
+    
     sql_query = select(DBProduct).where(DBProduct.product_id == product_id)
     result = await db.execute(sql_query)
     product = result.scalar_one_or_none()
     if product:
+        logger.info(f"Product with ID {product_id} retrieved successfully.")
         return product
     else:
         raise HTTPException(
@@ -58,6 +66,7 @@ async def create_product(
     db: AsyncSession = Depends(get_db),
     current_user: DBUser = Depends(get_current_user),
 ):
+    logger.info("Creating new product...")
     db_product = DBProduct(
         product_name=request_body.product_name,
         category=request_body.category,
@@ -70,9 +79,12 @@ async def create_product(
         await db.commit()
         await db.refresh(db_product)
 
+        logger.info("Product created successfully.")
+
         return db_product
 
     except Exception as e:
+        logger.error(f"Error creating product: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e),
@@ -84,11 +96,13 @@ async def update_product(
     db: AsyncSession = Depends(get_db),
     current_user: DBUser = Depends(get_current_user),
 ):
+    logger.info(f"Updating product with ID {request_body.product_id}...")
     sql_query = select(DBProduct).where(DBProduct.product_id == request_body.product_id)
     result = await db.execute(sql_query)
     db_product = result.scalar_one_or_none()
 
     if not db_product:
+        logger.warning(f"Product with ID {request_body.product_id} not found.")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Product not found",
@@ -103,9 +117,12 @@ async def update_product(
         await db.commit()
         await db.refresh(db_product)
 
+        logger.info(f"Product with ID {request_body.product_id} updated successfully.")
+
         return db_product
     
     except Exception as e:
+        logger.error(f"Error updating product with ID {request_body.product_id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e),
@@ -117,11 +134,13 @@ async def delete_product(
     db: AsyncSession = Depends(get_db),
     current_user: DBUser = Depends(get_current_user),
 ):
+    logger.info(f"Deleting product with ID {product_id}...")
     sql_query = select(DBProduct).where(DBProduct.product_id == product_id)
     result = await db.execute(sql_query)
     db_product = result.scalar_one_or_none()
 
     if not db_product:
+        logger.warning(f"Product with ID {product_id} not found.")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Product not found",
@@ -131,9 +150,12 @@ async def delete_product(
         await db.delete(db_product)
         await db.commit()
 
+        logger.info(f"Product with ID {product_id} deleted successfully.")
+
         return {"message": "Product deleted successfully"}
     
     except Exception as e:
+        logger.error(f"Error deleting product with ID {product_id}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e),

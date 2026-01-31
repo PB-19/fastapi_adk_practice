@@ -12,9 +12,6 @@ from backend.models.api_models import CreateSaleRequest
 router = APIRouter(prefix="/sales", tags=["Sales"])
 logger = AppLogger.get_logger(__name__)
 
-from sqlalchemy import select
-from fastapi import HTTPException, status
-
 async def enrich_sale_items(db, sale_items: list[dict]) -> list[dict]:
     product_ids = {item["product_id"] for item in sale_items}
 
@@ -73,10 +70,12 @@ async def get_sales(
     db: AsyncSession = Depends(get_db),
     current_user: DBUser = Depends(get_current_user),
 ):
+    logger.info("Retrieving sales list...")
     sql_query = select(DBSale)
     result = await db.execute(sql_query)
     sales = result.scalars().all()
 
+    logger.info(f"Retrieved {len(sales)} sales.")
     return sales
 
 @router.get("/{sale_id}")
@@ -85,11 +84,20 @@ async def get_sale_by_id(
     db: AsyncSession = Depends(get_db),
     current_user: DBUser = Depends(get_current_user),
 ):
+    logger.info(f"Retrieving sale with ID {sale_id}...")
     sql_query = select(DBSale).where(DBSale.sale_id == sale_id)
     result = await db.execute(sql_query)
-    sales = result.scalars().all()
+    sale = result.scalar_one_or_none()
 
-    return sales
+    if sale:
+        logger.info(f"Sale with ID {sale_id} retrieved successfully.")
+        return sale
+    else:
+        logger.warning(f"Sale with ID {sale_id} not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Sale not found",
+        )
 
 @router.post("")
 async def create_sale(
@@ -97,10 +105,12 @@ async def create_sale(
     db: AsyncSession = Depends(get_db),
     current_user: DBUser = Depends(get_current_user),
 ):
+    logger.info("Creating new sale...")
     try:
         enriched_items = await enrich_sale_items(db, request_body.sale_items)
 
         if not await inventory_is_sufficient(db, enriched_items):
+            logger.warning("Insufficient inventory for sale")
             return {
                 "message": "Insufficient inventory",
             }
@@ -135,6 +145,7 @@ async def create_sale(
         return sale
     
     except Exception as e:
+        logger.error(f"Error creating sale: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error while making sale:\n{str(e)}",

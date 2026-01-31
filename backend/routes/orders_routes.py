@@ -50,10 +50,12 @@ async def get_orders(
     db: AsyncSession = Depends(get_db),
     current_user: DBUser = Depends(get_current_user),
 ):
+    logger.info("Retrieving orders list...")
     sql_query = select(DBOrder)
     result = await db.execute(sql_query)
     orders = result.scalars().all()
 
+    logger.info(f"Retrieved {len(orders)} orders.")
     return orders
 
 @router.get("/{order_id}")
@@ -62,11 +64,20 @@ async def get_order_by_id(
     db: AsyncSession = Depends(get_db),
     current_user: DBUser = Depends(get_current_user),
 ):
+    logger.info(f"Retrieving order with ID {order_id}...")
     sql_query = select(DBOrder).where(DBOrder.order_id == order_id)
     result = await db.execute(sql_query)
-    orders = result.scalars().all()
+    order = result.scalar_one_or_none()
 
-    return orders
+    if order:
+        logger.info(f"Order with ID {order_id} retrieved successfully.")
+        return order
+    else:
+        logger.warning(f"Order with ID {order_id} not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Order not found",
+        )
 
 @router.post("")
 async def create_order(
@@ -74,6 +85,7 @@ async def create_order(
     db: AsyncSession = Depends(get_db),
     current_user: DBUser = Depends(get_current_user),
 ):
+    logger.info("Creating new order...")
     try:
         enriched_items = await enrich_order_items(db, request_body.order_items)
         logger.info(f"Enriched order items.")
@@ -116,6 +128,7 @@ async def create_order(
         return order
     
     except Exception as e:
+        logger.error(f"Error creating order: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error while making order:\n{str(e)}",
